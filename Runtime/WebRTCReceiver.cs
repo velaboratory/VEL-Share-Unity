@@ -86,6 +86,7 @@ namespace VELShareUnity
 
 		public RenderTexture renderTexture;
 
+		public string codecPreference = "video/H264";
 		public uint maxBitrateKbps = 10000;
 
 		public uint minBitrateKbps = 3000;
@@ -103,10 +104,6 @@ namespace VELShareUnity
 		bool remotePeerRemoteDescriptionSet = false;
 
 
-		//we should only have one of these, so it's static, and started by the first one
-
-		static Coroutine webRTCCoroutine;
-		static int numInstances = 0;
 
 
 		public class RpcJSON
@@ -654,7 +651,22 @@ new RTCIceServer { urls = new[] { iceUrl } }
 		}
 
 
+		private void AttemptCodecForce(RTCRtpTransceiver transceiver)
+		{
+			var caps = RTCRtpSender.GetCapabilities(TrackKind.Video);
+			var codecs = caps.codecs;
 
+			foreach(var c in caps.codecs)
+			{
+				print(c.mimeType);
+
+			}
+
+			// Filter codecs.
+			var h264Codecs = codecs.Where(codec => codec.mimeType == codecPreference);
+			transceiver.SetCodecPreferences(h264Codecs.ToArray());
+
+		}
 		private IEnumerator InitiateRTC()
 
 		{
@@ -665,11 +677,13 @@ new RTCIceServer { urls = new[] { iceUrl } }
 			{
 				MediaStream mediaStream = new MediaStream();
 				VideoStreamTrack videoStreamTrack = new VideoStreamTrack(renderTexture);
-
+				
 				if (streamAudio)
 				{
+
 					audioStreamTrack = new AudioStreamTrack();
 					var transceiver = localPeerConnection.AddTransceiver(TrackKind.Video | TrackKind.Audio);
+					AttemptCodecForce(transceiver);
 					transceiver.Direction = RTCRtpTransceiverDirection.SendOnly;
 					transceivers.Add(transceiver);
 					localPeerConnection.AddTrack(videoStreamTrack, mediaStream);
@@ -678,6 +692,7 @@ new RTCIceServer { urls = new[] { iceUrl } }
 				else
 				{
 					var transceiver = localPeerConnection.AddTransceiver(TrackKind.Video);
+					AttemptCodecForce(transceiver);
 					transceiver.Direction = RTCRtpTransceiverDirection.SendOnly;
 					transceivers.Add(transceiver);
 					localPeerConnection.AddTrack(videoStreamTrack, mediaStream);

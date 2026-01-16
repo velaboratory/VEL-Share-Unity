@@ -766,12 +766,12 @@ new RTCIceServer { urls = new[] { iceUrl } }
 
 				{
 
-					if (receivedVideoMat)
+					if (videoMat)
 
 					{
-
+						receivedVideoMat = new Material(videoMat);
 						receivedVideoMat.mainTexture = tex;
-
+						previewQuad.GetComponent<MeshRenderer>().sharedMaterial = receivedVideoMat;
 						previewQuad.transform.localScale = new Vector3(tex.width / (float)tex.height, 1, 1);
 						
 					}

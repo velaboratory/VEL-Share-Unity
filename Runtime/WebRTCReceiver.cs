@@ -50,7 +50,10 @@ namespace VELShareUnity
 
 		public bool applyToGlobalMaterial;
 
-		public string iceUrl = "stun:stun.l.google.com:19302";
+		[Tooltip("STUN/TURN server URL for ICE candidate gathering (e.g. stun:stun.l.google.com:19302). " +
+		         "Leave empty for LAN-only use — host candidates are sufficient on the same network, " +
+		         "and a configured-but-unreachable STUN server blocks ICE gathering when offline.")]
+		public string iceUrl = "";
 
 		public string signalingUrl = "wss://velnet.ugavel.com/ws";
 
@@ -368,15 +371,21 @@ namespace VELShareUnity
 
 			RTCConfiguration config = default(RTCConfiguration);
 
-			config.iceServers = new[]
-
+			// Only include a STUN/TURN server if one is configured. An empty
+			// iceUrl means "LAN-only" — host ICE candidates are sufficient
+			// and we don't want to block ICE gathering on an unreachable
+			// STUN server when the machine is offline.
+			if (!string.IsNullOrWhiteSpace(iceUrl))
 			{
-
-new RTCIceServer { urls = new[] { iceUrl } }
-
-};
-
-
+				config.iceServers = new[]
+				{
+					new RTCIceServer { urls = new[] { iceUrl } }
+				};
+			}
+			else
+			{
+				config.iceServers = new RTCIceServer[0];
+			}
 
 			return config;
 
@@ -915,7 +924,7 @@ new RTCIceServer { urls = new[] { iceUrl } }
 		}
 
 
-		//this is from the remote�
+		//this is from the remote�
 
 		private void RtcCandidate(TrickleJSON trickle)
 
